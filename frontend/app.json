@@ -36,8 +36,34 @@
         "BLUETOOTH_CONNECT",
         "BLUETOOTH_SCAN",
         "VIBRATE",
-        "FLASHLIGHT"
-      ]
+        "FLASHLIGHT",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN",
+        "VIBRATE",
+        "FLASHLIGHT",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT"
+      ],
+      "package": "com.anonymous.frontend"
     },
     "web": {
       "bundler": "metro",
@@ -72,7 +98,10 @@
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": true,
-          "modes": ["peripheral", "central"],
+          "modes": [
+            "peripheral",
+            "central"
+          ],
           "bluetoothAlwaysPermission": "Allow Bluetooth to connect to health wearables for vital signs monitoring."
         }
       ]
