@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 export interface EmergencyContact {
   id: string;
@@ -17,10 +18,49 @@ export interface UserSettings {
 const CONTACTS_KEY = '@emergency_contacts';
 const SETTINGS_KEY = '@user_settings';
 
+// Platform-specific storage wrapper
+const storage = {
+  async getItem(key: string): Promise<string | null> {
+    if (Platform.OS === 'web') {
+      try {
+        return localStorage.getItem(key);
+      } catch (error) {
+        console.error('localStorage error:', error);
+        return null;
+      }
+    }
+    return await AsyncStorage.getItem(key);
+  },
+  
+  async setItem(key: string, value: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.setItem(key, value);
+      } catch (error) {
+        console.error('localStorage error:', error);
+      }
+      return;
+    }
+    await AsyncStorage.setItem(key, value);
+  },
+  
+  async removeItem(key: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        console.error('localStorage error:', error);
+      }
+      return;
+    }
+    await AsyncStorage.removeItem(key);
+  }
+};
+
 // Emergency Contacts
 export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
   try {
-    const data = await AsyncStorage.getItem(CONTACTS_KEY);
+    const data = await storage.getItem(CONTACTS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
     console.error('Error loading contacts:', error);
@@ -30,7 +70,7 @@ export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
 
 export const saveEmergencyContacts = async (contacts: EmergencyContact[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+    await storage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
   } catch (error) {
     console.error('Error saving contacts:', error);
   }
@@ -54,7 +94,7 @@ export const deleteEmergencyContact = async (id: string): Promise<void> => {
 // User Settings
 export const getSettings = async (): Promise<UserSettings> => {
   try {
-    const data = await AsyncStorage.getItem(SETTINGS_KEY);
+    const data = await storage.getItem(SETTINGS_KEY);
     return data ? JSON.parse(data) : {
       enableAlarm: true,
       enableFlashlight: true,
@@ -74,7 +114,7 @@ export const getSettings = async (): Promise<UserSettings> => {
 
 export const saveSettings = async (settings: UserSettings): Promise<void> => {
   try {
-    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    await storage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
     console.error('Error saving settings:', error);
   }
