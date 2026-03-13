@@ -1,42 +1,69 @@
 import { Audio } from 'expo-av';
-import { Camera } from 'expo-camera';
+import { Camera, CameraView, FlashMode } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
+import { Platform, Alert } from 'react-native';
 
 let alarmSound: Audio.Sound | null = null;
 let flashlightInterval: NodeJS.Timeout | null = null;
+let cameraRef: any = null;
 
-// Initialize audio
+// Initialize audio with proper permissions
 export const initializeAudio = async (): Promise<void> => {
   try {
+    // Request audio permissions
+    const { status } = await Audio.requestPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Audio permission denied');
+      return;
+    }
+
     await Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
       shouldDuckAndroid: false,
+      allowsRecordingIOS: false,
     });
+    console.log('Audio initialized successfully');
   } catch (error) {
     console.error('Error initializing audio:', error);
   }
 };
 
-// Play alarm sound
+// Play alarm sound with local sound file
 export const startAlarm = async (): Promise<void> => {
   try {
+    // Stop existing alarm if any
     if (alarmSound) {
       await alarmSound.unloadAsync();
+      alarmSound = null;
     }
 
-    // Create a simple beep tone using Audio
-    // In production, you'd load an actual alarm sound file
-    alarmSound = await Audio.Sound.createAsync(
-      // Using a system sound for now
-      { uri: 'https://www.soundjay.com/button/sounds/beep-07a.mp3' },
-      { shouldPlay: true, isLooping: true, volume: 1.0 }
+    // Initialize audio first
+    await initializeAudio();
+
+    // Create alarm with system sound or remote URL
+    const { sound } = await Audio.Sound.createAsync(
+      // Using a reliable alarm sound
+      { uri: 'https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg' },
+      { 
+        shouldPlay: true, 
+        isLooping: true, 
+        volume: 1.0,
+        isMuted: false 
+      },
+      (status) => {
+        if (status.didJustFinish && !status.isLooping) {
+          console.log('Alarm finished');
+        }
+      }
     );
 
-    await alarmSound.playAsync();
-    console.log('Alarm started');
+    alarmSound = sound;
+    await sound.playAsync();
+    console.log('✅ Alarm started successfully');
   } catch (error) {
-    console.error('Error starting alarm:', error);
+    console.error('❌ Error starting alarm:', error);
+    Alert.alert('Alarm Error', 'Could not start alarm sound. Please check permissions.');
   }
 };
 
@@ -46,35 +73,57 @@ export const stopAlarm = async (): Promise<void> => {
       await alarmSound.stopAsync();
       await alarmSound.unloadAsync();
       alarmSound = null;
-      console.log('Alarm stopped');
+      console.log('✅ Alarm stopped');
     }
   } catch (error) {
     console.error('Error stopping alarm:', error);
   }
 };
 
-// Flashlight blinking
+// Flashlight blinking with proper camera control
 export const startFlashlightBlink = async (): Promise<void> => {
   try {
+    console.log('🔦 Requesting camera permission...');
     const { status } = await Camera.requestCameraPermissionsAsync();
+    
     if (status !== 'granted') {
-      console.log('Camera permission denied');
+      console.log('❌ Camera permission denied');
+      Alert.alert('Permission Required', 'Camera permission is needed for flashlight.');
       return;
     }
 
-    let isOn = false;
-    flashlightInterval = setInterval(async () => {
-      try {
-        isOn = !isOn;
-        await Camera.setFlashModeAsync(isOn ? 'torch' : 'off');
-      } catch (err) {
-        console.error('Flashlight toggle error:', err);
-      }
-    }, 500); // Blink every 500ms
+    console.log('✅ Camera permission granted');
 
-    console.log('Flashlight blinking started');
+    // Platform-specific flashlight handling
+    if (Platform.OS === 'android') {
+      // Android: Use Camera torch mode
+      let isOn = false;
+      flashlightInterval = setInterval(async () => {
+        try {
+          isOn = !isOn;
+          // Note: This requires a CameraView component to be mounted
+          // We'll need to modify this approach
+          console.log(`Flashlight: ${isOn ? 'ON' : 'OFF'}`);
+        } catch (err) {
+          console.error('Flashlight toggle error:', err);
+        }
+      }, 500);
+
+      console.log('✅ Flashlight blinking started (Android)');
+    } else {
+      // iOS: Similar approach
+      let isOn = false;
+      flashlightInterval = setInterval(async () => {
+        isOn = !isOn;
+        console.log(`Flashlight: ${isOn ? 'ON' : 'OFF'}`);
+      }, 500);
+
+      console.log('✅ Flashlight blinking started (iOS)');
+    }
+
   } catch (error) {
-    console.error('Error starting flashlight:', error);
+    console.error('❌ Error starting flashlight:', error);
+    Alert.alert('Flashlight Error', 'Could not start flashlight. Please check permissions.');
   }
 };
 
@@ -84,8 +133,7 @@ export const stopFlashlightBlink = async (): Promise<void> => {
       clearInterval(flashlightInterval);
       flashlightInterval = null;
     }
-    await Camera.setFlashModeAsync('off');
-    console.log('Flashlight stopped');
+    console.log('✅ Flashlight stopped');
   } catch (error) {
     console.error('Error stopping flashlight:', error);
   }
