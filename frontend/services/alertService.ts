@@ -2,6 +2,7 @@ import { Audio } from 'expo-av';
 import { Camera, CameraView, FlashMode } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { Platform, Alert } from 'react-native';
+import { Flashlight } from './nativeModules';
 
 let alarmSound: Audio.Sound | null = null;
 let flashlightInterval: NodeJS.Timeout | null = null;
