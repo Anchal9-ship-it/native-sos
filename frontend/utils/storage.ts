@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 export interface EmergencyContact {
@@ -18,42 +17,52 @@ export interface UserSettings {
 const CONTACTS_KEY = '@emergency_contacts';
 const SETTINGS_KEY = '@user_settings';
 
-// Platform-specific storage wrapper
+// Platform-specific storage wrapper that works on web and native
 const storage = {
   async getItem(key: string): Promise<string | null> {
-    if (Platform.OS === 'web') {
-      try {
+    try {
+      if (Platform.OS === 'web') {
+        // Use localStorage for web
         return localStorage.getItem(key);
-      } catch (error) {
-        console.error('localStorage error:', error);
-        return null;
+      } else {
+        // Dynamically import AsyncStorage only for native platforms
+        const AsyncStorage = await import('@react-native-async-storage/async-storage');
+        return await AsyncStorage.default.getItem(key);
       }
+    } catch (error) {
+      console.error('Storage getItem error:', error);
+      return null;
     }
-    return await AsyncStorage.getItem(key);
   },
   
   async setItem(key: string, value: string): Promise<void> {
-    if (Platform.OS === 'web') {
-      try {
+    try {
+      if (Platform.OS === 'web') {
+        // Use localStorage for web
         localStorage.setItem(key, value);
-      } catch (error) {
-        console.error('localStorage error:', error);
+      } else {
+        // Dynamically import AsyncStorage only for native platforms
+        const AsyncStorage = await import('@react-native-async-storage/async-storage');
+        await AsyncStorage.default.setItem(key, value);
       }
-      return;
+    } catch (error) {
+      console.error('Storage setItem error:', error);
     }
-    await AsyncStorage.setItem(key, value);
   },
   
   async removeItem(key: string): Promise<void> {
-    if (Platform.OS === 'web') {
-      try {
+    try {
+      if (Platform.OS === 'web') {
+        // Use localStorage for web
         localStorage.removeItem(key);
-      } catch (error) {
-        console.error('localStorage error:', error);
+      } else {
+        // Dynamically import AsyncStorage only for native platforms
+        const AsyncStorage = await import('@react-native-async-storage/async-storage');
+        await AsyncStorage.default.removeItem(key);
       }
-      return;
+    } catch (error) {
+      console.error('Storage removeItem error:', error);
     }
-    await AsyncStorage.removeItem(key);
   }
 };
 
