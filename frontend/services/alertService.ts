@@ -80,50 +80,38 @@ export const stopAlarm = async (): Promise<void> => {
   }
 };
 
-// Flashlight blinking with proper camera control
+// Flashlight blinking with NATIVE Android module
 export const startFlashlightBlink = async (): Promise<void> => {
   try {
-    console.log('🔦 Requesting camera permission...');
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    
-    if (status !== 'granted') {
-      console.log('❌ Camera permission denied');
-      Alert.alert('Permission Required', 'Camera permission is needed for flashlight.');
-      return;
-    }
+    console.log('🔦 Starting native flashlight...');
 
-    console.log('✅ Camera permission granted');
-
-    // Platform-specific flashlight handling
     if (Platform.OS === 'android') {
-      // Android: Use Camera torch mode
+      // Use native Android flashlight module
       let isOn = false;
       flashlightInterval = setInterval(async () => {
         try {
           isOn = !isOn;
-          // Note: This requires a CameraView component to be mounted
-          // We'll need to modify this approach
+          if (isOn) {
+            await Flashlight.turnOn();
+          } else {
+            await Flashlight.turnOff();
+          }
           console.log(`Flashlight: ${isOn ? 'ON' : 'OFF'}`);
         } catch (err) {
           console.error('Flashlight toggle error:', err);
         }
       }, 500);
 
-      console.log('✅ Flashlight blinking started (Android)');
+      console.log('✅ Native flashlight blinking started');
     } else {
-      // iOS: Similar approach
-      let isOn = false;
-      flashlightInterval = setInterval(async () => {
-        isOn = !isOn;
-        console.log(`Flashlight: ${isOn ? 'ON' : 'OFF'}`);
-      }, 500);
-
-      console.log('✅ Flashlight blinking started (iOS)');
+      // iOS: Fallback (requires CameraView component)
+      console.log('⚠️ iOS flashlight needs CameraView component');
+      Alert.alert('iOS Notice', 'Flashlight requires camera component on iOS');
     }
 
   } catch (error) {
     console.error('❌ Error starting flashlight:', error);
-    Alert.alert('Flashlight Error', 'Could not start flashlight. Please check permissions.');
+    Alert.alert('Flashlight Error', 'Could not start flashlight.');
   }
 };
 
@@ -132,6 +120,9 @@ export const stopFlashlightBlink = async (): Promise<void> => {
     if (flashlightInterval) {
       clearInterval(flashlightInterval);
       flashlightInterval = null;
+    }
+    if (Platform.OS === 'android') {
+      await Flashlight.turnOff();
     }
     console.log('✅ Flashlight stopped');
   } catch (error) {

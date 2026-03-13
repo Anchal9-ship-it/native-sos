@@ -15,6 +15,7 @@ import { getEmergencyContacts, getSettings } from '../utils/storage';
 import { getCurrentLocation } from '../services/locationService';
 import { sendEmergencySMS } from '../services/smsService';
 import { initializeAudio } from '../services/alertService';
+import { VolumeButton } from '../services/nativeModules';
 
 export default function Index() {
   const router = useRouter();
@@ -23,6 +24,23 @@ export default function Index() {
 
   useEffect(() => {
     initializeApp();
+  }, []);
+
+  // Volume button listener for SOS trigger
+  useEffect(() => {
+    console.log('Setting up volume button listener...');
+    VolumeButton.enable();
+    
+    const removeListener = VolumeButton.addListener(() => {
+      console.log('🔊 Volume buttons pressed together - triggering SOS!');
+      handleSOSTrigger();
+    });
+
+    return () => {
+      console.log('Cleaning up volume button listener...');
+      removeListener();
+      VolumeButton.disable();
+    };
   }, []);
 
   const initializeApp = async () => {
